@@ -1,0 +1,8 @@
+# ignored folders
+__pycache__/
+
+# ignored files
+test.py
+.cache
+nohup.out
+session
