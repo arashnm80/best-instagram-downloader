@@ -2,7 +2,7 @@
 
 ## How to run guide
 - clone repo
-- set these to env
+- set these to `.env` file in the root folder of repo
 ```
 BEST_INSTAGRAM_DOWNLOADER_BOT_API
 LOG_CHANNEL_ID
