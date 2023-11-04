@@ -42,12 +42,12 @@ def get_ready_to_work_insta_instance():
     
     return L
 
-def download_post_to_folder(post_id, folder):
+def download_post_to_folder(post_shortcode, folder):
     L = get_ready_to_work_insta_instance()
-    post = Post.from_shortcode(L.context, post_id)
+    post = Post.from_shortcode(L.context, post_shortcode)
     L.download_post(post, target=folder)
 
-def get_post_id_from_link(link):
+def get_post_shortcode_from_link(link):
     match = re.search(insta_post_reg, link)
     if match:
         return match.group(1)

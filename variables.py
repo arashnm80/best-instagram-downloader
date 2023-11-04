@@ -19,5 +19,6 @@ log_channel_id = os.getenv('LOG_CHANNEL_ID') # set to False if not needed
 session_file_name = "session" # any name change should apply to .gitignore too
 
 # regex
-insta_post_reg = r'(?:https?://www\.)?instagram\.com\S*?/p/(\w{11})/?'
+# insta_post_reg = r'(?:https?://www\.)?instagram\.com\S*?/p/(\w{11})/?'
+insta_post_reg = r'(?:https?://www\.)?instagram\.com\S*?/p/([a-zA-Z0-9-]{11})/?'
 insta_correct_link_reg = insta_post_reg # story can be added later

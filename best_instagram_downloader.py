@@ -8,24 +8,42 @@ def send_welcome(message):
 
 @bot.message_handler(regexp = insta_correct_link_reg)
 def handle_correct_spotify_link(message):
-    # post_id = "CkyJVJvucbT" # bob
-    # post_id = "Cy25C-ZIOgq" # girl with dress
-    # post_id = "CyxWskeOMUo" # rock
-    # post_id = "CzG8QcLoqHR" # sheida
-    
-    post_id = get_post_id_from_link(message.text)
+    post_shortcode = get_post_shortcode_from_link(message.text)
 
-    if not post_id:
+    if not post_shortcode:
         return # post id not found
-    
-    # download_post_to_folder(post_id, "testFolder")
 
-    # # test stuff
-    # L = get_ready_to_work_insta_instance()
-    # post = Post.from_shortcode(L.context, post_id)
-    # sidecars = post.get_sidecar_nodes()
-    # for s in sidecars:
-    #     print(s.display_url)
+    L = get_ready_to_work_insta_instance()
+    post = Post.from_shortcode(L.context, post_shortcode)
+    sidecars = post.get_sidecar_nodes()
+    first_media = False
+    media_list = []
+    for s in sidecars:
+        if s.is_video: # it's a video
+            url = s.video_url
+            if not first_media_type:
+                first_media = {"type": "video", "url": url}
+            media = telebot.types.InputMediaVideo(url)
+        else: # it's an image
+            url = s.display_url
+            if not first_media_type:
+                first_media = {"type": "image", "url": url}
+            media = telebot.types.InputMediaPhoto(url)
+
+        media_list.append(media)
+
+    if len(media_list) == 1:
+        if first_media["type"] == "video":
+            print("single video")
+            bot.send_video(message.chat.id, first_media["url"], caption=post.caption)
+        else:
+            print("single image")
+            bot.send_photo(message.chat.id, first_media["url"], caption=post.caption)
+        return
+
+    print("media group")
+    bot.send_media_group(message.chat.id, media_list)
+    return
 
     
 
