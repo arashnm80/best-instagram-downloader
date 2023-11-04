@@ -17,3 +17,6 @@ pip3 install -r requirements.txt
 ```
 nohup python3 best_instagram_downloader.py &
 ```
+
+## to-do next:
+- [ ] handle expired session

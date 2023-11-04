@@ -22,7 +22,7 @@ session_file_name = "session" # any name change should apply to .gitignore too
 
 # regex
 insta_post_reg = r'(?:https?://www\.)?instagram\.com\S*?/p/([a-zA-Z0-9_-]{11})/?'
-insta_story_reg = r'(?:https?://www\.)?instagram\.com\S*?/p/([a-zA-Z0-9_-]{11})/?'
+insta_reel_reg = r'(?:https?://www\.)?instagram\.com\S*?/reel/([a-zA-Z0-9_-]{11})/?'
 insta_correct_link_reg = insta_post_reg # story can be added later
 
 # messages
@@ -43,5 +43,10 @@ But you can try again another time or with another link.'''
 
 wrong_pattern_msg = '''wrong pattern.
 Currently only post links are supported.
+
+Motivate me to add support of reels and stories by subscribing to [my youtube](https://www.youtube.com/@Arashnm80)'''
+
+reel_msg = '''reel links are not supported at the moment.
+You can send post links instead.
 
 Motivate me to add support of reels and stories by subscribing to [my youtube](https://www.youtube.com/@Arashnm80)'''
