@@ -26,19 +26,28 @@ def log(log_message):
     else:
         print('Error in registering log:', log.status_code)
 
+def try_to_delete_message(chat_id, message_id):
+    # initialize bot
+    bot = telebot.TeleBot(bot_token)
+
+    try:
+        bot.delete_message(chat_id, message_id)
+    except:
+        pass # ignore errors if user has already deleted the message
+
 def get_ready_to_work_insta_instance():
     # create instance
     L = instaloader.Instaloader()
 
     # prepare session
     try:
-        print("restore session")
         L.load_session_from_file(USER, session_file_name) # (load session created w/
                                     #  `instaloader -l USERNAME`)
     except:
-        print("new login")
         L.login(USER, PASS)
+        print("new login")
         L.save_session_to_file(session_file_name)
+        print("save to a new session")
     
     return L
 
