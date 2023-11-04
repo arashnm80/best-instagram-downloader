@@ -21,12 +21,12 @@ def handle_correct_spotify_link(message):
     for s in sidecars:
         if s.is_video: # it's a video
             url = s.video_url
-            if not first_media_type:
+            if not first_media:
                 first_media = {"type": "video", "url": url}
             media = telebot.types.InputMediaVideo(url)
         else: # it's an image
             url = s.display_url
-            if not first_media_type:
+            if not first_media:
                 first_media = {"type": "image", "url": url}
             media = telebot.types.InputMediaPhoto(url)
 
