@@ -2,6 +2,7 @@
 __pycache__/
 
 # ignored files
+.env
 test.py
 .cache
 nohup.out

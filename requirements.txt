@@ -1,0 +1,3 @@
+telebot
+instaloader
+python-dotenv
