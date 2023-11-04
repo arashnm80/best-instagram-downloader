@@ -12,19 +12,19 @@ def help_command_handler(message):
     bot.send_message(message.chat.id, help_msg, parse_mode="Markdown", disable_web_page_preview=True)
     log(f"{bot_username} log:\n\nuser: {message.chat.id}\n\nhelp command")
 
-@bot.message_handler(regexp = insta_post_reg)
-def post_link_handler(message):
+@bot.message_handler(regexp = insta_post_or_reel_reg)
+def post_or_reel_link_handler(message):
     log(f"{bot_username} log:\n\nuser: {message.chat.id}\n\npost link: {message.text}")
     try:
         guide_msg_1 = bot.send_message(message.chat.id, "Ok wait a few moments...")
-        post_shortcode = get_post_shortcode_from_link(message.text)
+        post_shortcode = get_post_or_reel_shortcode_from_link(message.text)
         print("shortcode:", post_shortcode)
 
         if not post_shortcode:
             log(f"{bot_username} log:\n\nuser: {message.chat.id}\n\nerror in getting post_shortcode")
             return # post shortcode not found
 
-        L = get_ready_to_work_insta_instance()
+        L = get_ready_to_work_insta_instance()        
         post = Post.from_shortcode(L.context, post_shortcode)
 
         # caption handling
@@ -34,7 +34,6 @@ def post_link_handler(message):
         new_caption = new_caption + caption_trail
 
         # handle post with single media
-        try_to_delete_message(message.chat.id, guide_msg_1.message_id)
         if post.mediacount == 1:
             if post.is_video:
                 print("single video")
@@ -43,6 +42,7 @@ def post_link_handler(message):
                 print("single image")
                 bot.send_photo(message.chat.id, post.url, caption=new_caption)
             bot.send_message(message.chat.id, end_msg, parse_mode="Markdown", disable_web_page_preview=True)
+            try_to_delete_message(message.chat.id, guide_msg_1.message_id)
             return
 
         # handle post with multiple media
@@ -61,18 +61,20 @@ def post_link_handler(message):
                     media = telebot.types.InputMediaPhoto(url, caption=new_caption)
             media_list.append(media)
         print("media group")
-        try_to_delete_message(message.chat.id, guide_msg_1.message_id)
         bot.send_media_group(message.chat.id, media_list)
         bot.send_message(message.chat.id, end_msg, parse_mode="Markdown", disable_web_page_preview=True)
+        try_to_delete_message(message.chat.id, guide_msg_1.message_id)
         return
     except Exception as e:
+        try_to_delete_message(message.chat.id, guide_msg_1.message_id)
         log(f"{bot_username} log:\n\nuser: {message.chat.id}\n\nerror in main body: {str(e)}")
         bot.send_message(message.chat.id, fail_msg, parse_mode="Markdown", disable_web_page_preview=True)
+        traceback.print_exc() # print error traceback
 
-@bot.message_handler(regexp = insta_reel_reg)
-def reel_link_handler(message):
-    log(f"{bot_username} log:\n\nuser: {message.chat.id}\n\nreel link: {message.text}")
-    bot.send_message(message.chat.id, reel_msg, parse_mode="Markdown", disable_web_page_preview=True)
+# @bot.message_handler(regexp = insta_reel_reg)
+# def reel_link_handler(message):
+#     log(f"{bot_username} log:\n\nuser: {message.chat.id}\n\nreel link: {message.text}")
+#     bot.send_message(message.chat.id, reel_msg, parse_mode="Markdown", disable_web_page_preview=True)
 
 @bot.message_handler(func=lambda message: True)
 def wrong_pattern_handler(message):

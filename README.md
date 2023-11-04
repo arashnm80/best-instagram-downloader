@@ -19,4 +19,4 @@ nohup python3 best_instagram_downloader.py &
 ```
 
 ## to-do next:
-- [ ] handle expired session
+- [x] handle expired session

@@ -21,9 +21,7 @@ caption_trail = "\n\n\n" + bot_username
 session_file_name = "session" # any name change should apply to .gitignore too
 
 # regex
-insta_post_reg = r'(?:https?://www\.)?instagram\.com\S*?/p/([a-zA-Z0-9_-]{11})/?'
-insta_reel_reg = r'(?:https?://www\.)?instagram\.com\S*?/reel/([a-zA-Z0-9_-]{11})/?'
-insta_correct_link_reg = insta_post_reg # story can be added later
+insta_post_or_reel_reg = r'(?:https?://www\.)?instagram\.com\S*?/(p|reel)/([a-zA-Z0-9_-]{11})/?'
 
 # messages
 start_msg = '''Welcome :)

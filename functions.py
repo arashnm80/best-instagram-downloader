@@ -5,9 +5,8 @@ from instaloader import *
 
 import re
 import requests
-
+import traceback # to print error traceback
 import telebot
-# from telebot import types
 
 def log(log_message):
     if not log_channel_id:
@@ -41,14 +40,18 @@ def get_ready_to_work_insta_instance():
 
     # prepare session
     try:
-        L.load_session_from_file(USER, session_file_name) # (load session created w/
-                                    #  `instaloader -l USERNAME`)
+        L.load_session_from_file(USER, session_file_name) # gives error if file doesn't exist
+        print(L.test_login()) # gives error if session is expired
+        print("using old session")
     except:
+        if os.path.exists(session_file_name):
+            os.remove(session_file_name) # delete older session if it file exists
         L.login(USER, PASS)
         print("new login")
         L.save_session_to_file(session_file_name)
         print("save to a new session")
     
+
     return L
 
 def download_post_to_folder(post_shortcode, folder):
@@ -56,9 +59,10 @@ def download_post_to_folder(post_shortcode, folder):
     post = Post.from_shortcode(L.context, post_shortcode)
     L.download_post(post, target=folder)
 
-def get_post_shortcode_from_link(link):
-    match = re.search(insta_post_reg, link)
+def get_post_or_reel_shortcode_from_link(link):
+    match = re.search(insta_post_or_reel_reg, link)
     if match:
-        return match.group(1)
+        return match.group(2)
     else:
         return False
+
