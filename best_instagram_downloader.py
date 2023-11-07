@@ -18,7 +18,7 @@ def post_or_reel_link_handler(message):
     try:
         guide_msg_1 = bot.send_message(message.chat.id, "Ok wait a few moments...")
         post_shortcode = get_post_or_reel_shortcode_from_link(message.text)
-        print("shortcode:", post_shortcode)
+        print(post_shortcode)
 
         if not post_shortcode:
             log(f"{bot_username} log:\n\nuser: {message.chat.id}\n\nerror in getting post_shortcode")
@@ -36,10 +36,8 @@ def post_or_reel_link_handler(message):
         # handle post with single media
         if post.mediacount == 1:
             if post.is_video:
-                print("single video")
                 bot.send_video(message.chat.id, post.video_url, caption=new_caption)
             else:
-                print("single image")
                 bot.send_photo(message.chat.id, post.url, caption=new_caption)
             bot.send_message(message.chat.id, end_msg, parse_mode="Markdown", disable_web_page_preview=True)
             try_to_delete_message(message.chat.id, guide_msg_1.message_id)
@@ -60,7 +58,6 @@ def post_or_reel_link_handler(message):
                 if not media_list: # first media of post
                     media = telebot.types.InputMediaPhoto(url, caption=new_caption)
             media_list.append(media)
-        print("media group")
         bot.send_media_group(message.chat.id, media_list)
         bot.send_message(message.chat.id, end_msg, parse_mode="Markdown", disable_web_page_preview=True)
         try_to_delete_message(message.chat.id, guide_msg_1.message_id)
