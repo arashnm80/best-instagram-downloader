@@ -41,6 +41,12 @@ def post_or_reel_link_handler(message):
                 bot.send_photo(message.chat.id, post.url, caption=new_caption)
             bot.send_message(message.chat.id, end_msg, parse_mode="Markdown", disable_web_page_preview=True)
             try_to_delete_message(message.chat.id, guide_msg_1.message_id)
+            ### debug
+            if os.path.exists(session_file_name):
+                os.remove(session_file_name) # delete older session if it file exists
+            L.save_session_to_file(session_file_name)
+            print("save to a new session")
+            ###
             return
 
         # handle post with multiple media
@@ -61,12 +67,25 @@ def post_or_reel_link_handler(message):
         bot.send_media_group(message.chat.id, media_list)
         bot.send_message(message.chat.id, end_msg, parse_mode="Markdown", disable_web_page_preview=True)
         try_to_delete_message(message.chat.id, guide_msg_1.message_id)
+        ### debug
+        if os.path.exists(session_file_name):
+            os.remove(session_file_name) # delete older session if it file exists
+        L.save_session_to_file(session_file_name)
+        print("save to a new session")
+        ###
         return
     except Exception as e:
         try_to_delete_message(message.chat.id, guide_msg_1.message_id)
         log(f"{bot_username} log:\n\nuser: {message.chat.id}\n\nerror in main body: {str(e)}")
         bot.send_message(message.chat.id, fail_msg, parse_mode="Markdown", disable_web_page_preview=True)
         traceback.print_exc() # print error traceback
+        ### debug
+        if os.path.exists(session_file_name):
+            os.remove(session_file_name) # delete older session if it file exists
+        L.save_session_to_file(session_file_name)
+        print("save to a new session")
+        ###
+
 
 # @bot.message_handler(regexp = insta_reel_reg)
 # def reel_link_handler(message):

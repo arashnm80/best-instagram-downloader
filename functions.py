@@ -8,6 +8,20 @@ import requests
 import traceback # to print error traceback
 import telebot
 
+# classes (for rate limiting - might delete them)
+
+class MyCustomException(Exception):
+    def __init__(self, message="Custom rate limit exceeded"):
+        self.message = message
+        super().__init__(self.message)
+
+class MyRateController(instaloader.RateController):
+    def sleep(self, secs):
+        raise MyCustomException("Custom rate limit exceeded")
+
+
+# functions
+
 def log(log_message):
     if not log_channel_id:
         return # set to False log channel means it is not needed
@@ -35,6 +49,9 @@ def try_to_delete_message(chat_id, message_id):
         pass # ignore errors if user has already deleted the message
 
 def get_ready_to_work_insta_instance():
+    # #  (for rate limiting - might delete it)
+    # L = instaloader.Instaloader(rate_controller=lambda ctx: MyRateController(ctx))
+    
     # create instance
     L = instaloader.Instaloader()
 
@@ -44,12 +61,16 @@ def get_ready_to_work_insta_instance():
         print(L.test_login()) # gives error if session is expired
         print("using old session")
     except:
-        if os.path.exists(session_file_name):
-            os.remove(session_file_name) # delete older session if it file exists
-        L.login(USER, PASS)
-        print("new login")
-        L.save_session_to_file(session_file_name)
-        print("save to a new session")
+        log("session failed")
+        print("session failed")
+        #### commented for debug
+        # if os.path.exists(session_file_name):
+        #     os.remove(session_file_name) # delete older session if it file exists
+        # L.login(USER, PASS)
+        # log("new login with instagram bot")
+        # L.save_session_to_file(session_file_name)
+        # print("save to a new session")
+        ####
     
 
     return L
@@ -65,4 +86,3 @@ def get_post_or_reel_shortcode_from_link(link):
         return match.group(2)
     else:
         return False
-

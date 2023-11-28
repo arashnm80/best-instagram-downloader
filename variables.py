@@ -32,9 +32,9 @@ https://github.com/arashnm80/best-instagram-downloader
 
 You can give me energy by giving a star in github :)'''
 
-end_msg = '''You can check out my spotify downloader bot too: @SpotSeekBot
+end_msg = '''You can use my *Spotify Downloader* too: @SpotSeekBot
 
-Subscribe to [my youtube](https://www.youtube.com/@Arashnm80) for more...'''
+Subscribe to [My YouTube](https://www.youtube.com/@Arashnm80) for more🔥'''
 
 fail_msg = '''Sorry, my process wasn't successful.
 But you can try again another time or with another link.'''
