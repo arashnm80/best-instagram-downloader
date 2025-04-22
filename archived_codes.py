@@ -24,3 +24,4 @@ def code_to_media_id(short_code):
     return media_id
 
 print(code_to_media_id("C0KuSEuI_JU"))
+print(code_to_media_id("C0KuSEuI"))

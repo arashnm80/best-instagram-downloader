@@ -20,3 +20,15 @@ nohup python3 best_instagram_downloader.py &
 
 ## to-do next:
 - [x] handle expired session
+
+
+-------------------------------------------------
+
+found this:
+https://github.com/riad-azz/instagram-video-downloader
+
+the main file for it is:
+src/app/api/instagram/p/[shortcode]
+
+my python equivalent of it which works fine:
+riad-azz.py
