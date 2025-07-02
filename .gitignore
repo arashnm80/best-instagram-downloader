@@ -1,5 +1,6 @@
 # ignored folders
 __pycache__/
+venv/
 
 # ignored files
 .env
@@ -7,3 +8,4 @@ test.py
 .cache
 nohup.out
 session
+instagram_response.json

@@ -1,6 +1,4 @@
-import requests
-import json
-import urllib.parse
+from variables import *
 
 def generate_request_body(shortcode):
     return urllib.parse.urlencode({
@@ -36,7 +34,7 @@ def generate_request_body(shortcode):
         'doc_id': '8845758582119845',
     })
 
-def download_instagram_video(shortcode, output_filename=None):
+def get_instagram_media_links(shortcode):
     url = "https://www.instagram.com/graphql/query"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Linux; Android 11; SAMSUNG SM-G973U) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/14.2 Chrome/87.0.4280.141 Mobile Safari/537.36',
@@ -57,38 +55,52 @@ def download_instagram_video(shortcode, output_filename=None):
         'Cache-Control': 'no-cache',
         'Referer': f'https://www.instagram.com/p/{shortcode}/',
     }
-    
     data = generate_request_body(shortcode)
-    
-    response = requests.post(url, headers=headers, data=data)
+    response = requests.post(url, headers=headers, data=data, proxies=warp_proxies)
     response.raise_for_status()
-    
     json_response = response.json()
 
     # debug - to view json view pretty
-    with open(f"instagram_response_{shortcode}.json", "w") as f:
+    with open(f"instagram_response.json", "w") as f:
         json.dump(json_response, f, indent=2)
 
-    
-    # Extract video URL from the response
+    media_links = []
+    caption = None
     try:
-        video_url = json_response['data']['xdt_shortcode_media']['video_url']
-    except KeyError:
-        raise Exception("Could not find video URL in the response. The post might not contain a video.")
-    
-    # Download the video
-    video_response = requests.get(video_url, stream=True)
-    video_response.raise_for_status()
-    
-    if output_filename is None:
-        output_filename = f"instagram_video_{shortcode}.mp4"
-    
-    with open(output_filename, 'wb') as f:
-        for chunk in video_response.iter_content(chunk_size=8192):
-            f.write(chunk)
-    
-    return output_filename
+        media = json_response['data']['xdt_shortcode_media']
+        # caption
+        caption = media.get('edge_media_to_caption', {}).get('edges', [{}])[0].get('node', {}).get('text', '')
+        # Check if it's a sidecar (multiple media)
+        if media.get('__typename') == 'XDTGraphSidecar' and 'edge_sidecar_to_children' in media:
+            edges = media['edge_sidecar_to_children']['edges']
+            for edge in edges:
+                node = edge['node']
+                media_type = 'video' if node.get('is_video', False) else 'image'
+                if media_type == 'video':
+                    url = node.get('video_url')
+                else:
+                    display_resources = node.get('display_resources', [])
+                    if display_resources:
+                        url = display_resources[-1]['src']
+                    else:
+                        url = node.get('display_url')
+                media_links.append({'type': media_type, 'url': url})
+        else:
+            media_type = 'video' if media.get('is_video', False) else 'image'
+            if media_type == 'video':
+                url = media.get('video_url')
+            else:
+                display_resources = media.get('display_resources', [])
+                if display_resources:
+                    url = display_resources[-1]['src']
+                else:
+                    url = media.get('display_url')
+            media_links.append({'type': media_type, 'url': url})
+    except Exception as e:
+        print(f"Error extracting media info: {e}")
+    return media_links, caption
 
 # Example usage:
-shortcode = "DE0W46DvnCU"  # Replace with actual shortcode from Instagram URL
-download_instagram_video(shortcode, "my_video.mp4")
+# shortcode = "DJx51PyxMpy"  # rock post: multiple videos and images
+# links, caption = get_instagram_media_links(shortcode)
+# print(links, caption)

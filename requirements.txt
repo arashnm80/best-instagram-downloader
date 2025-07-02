@@ -1,3 +1,4 @@
 telebot
 instaloader
 python-dotenv
+requests[socks]

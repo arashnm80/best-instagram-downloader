@@ -5,9 +5,7 @@
 - set these to `.env` file in the root folder of repo
 ```
 BEST_INSTAGRAM_DOWNLOADER_BOT_API
-LOG_CHANNEL_ID
-INSTAGRAM_USER_1
-INSTAGRAM_PASS_1
+INSTAGRAM_DOWNLOADER_LOG_CHANNEL_ID
 ```
 - install required python modules:
 ```
@@ -23,12 +21,10 @@ nohup python3 best_instagram_downloader.py &
 
 
 -------------------------------------------------
-
-found this:
+## special thanks to riad-azz
+### repo
 https://github.com/riad-azz/instagram-video-downloader
-
-the main file for it is:
+### main core
 src/app/api/instagram/p/[shortcode]
-
-my python equivalent of it which works fine:
+### my python equivalent code
 riad-azz.py
