@@ -98,9 +98,11 @@ def get_instagram_media_links(shortcode):
             media_links.append({'type': media_type, 'url': url})
     except Exception as e:
         print(f"Error extracting media info: {e}")
+        # return "error", f"{e}"
     return media_links, caption
 
-# Example usage:
-# shortcode = "DJx51PyxMpy"  # rock post: multiple videos and images
+# # Example usage:
+# # shortcode = "DJx51PyxMpy"  # rock post: multiple videos and images
+# shortcode = "DMLLAxNsWFL"  # zelatan: one video (opens in my browser but erros for telegram servers)
 # links, caption = get_instagram_media_links(shortcode)
 # print(links, caption)

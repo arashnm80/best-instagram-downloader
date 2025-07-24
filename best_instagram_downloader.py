@@ -33,6 +33,12 @@ def post_or_reel_link_handler(message):
             return # post shortcode not found
 
         media_links, caption = get_instagram_media_links(post_shortcode)
+        
+        # todo: fix later if possible and don't let it to happen in the first place
+        # if they are both empty and the riad_azz returned this error:
+        # "Error extracting media info: 'NoneType' object has no attribute 'get'"
+        if (not media_links) and (not caption):
+            raise Exception("riad_azz returned nothing")
 
         # # debug
         # print(media_links)
@@ -84,8 +90,8 @@ def post_or_reel_link_handler(message):
             pass
         log(f"{bot_username} log:\n\nuser: {message.chat.id}\n\n🛑 error in main body: {str(e)}")
         bot.send_message(message.chat.id, fail_msg, parse_mode="Markdown", disable_web_page_preview=True)
-        import traceback
-        traceback.print_exc() # print error traceback
+        # import traceback
+        # traceback.print_exc() # print error traceback
 
 @bot.message_handler(func=lambda message: True)
 def wrong_pattern_handler(message):
