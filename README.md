@@ -1,3 +1,5 @@
+
+
 # Best Instagram Downloader
 
 ## How to run guide
@@ -6,6 +8,7 @@
 ```
 BEST_INSTAGRAM_DOWNLOADER_BOT_API
 INSTAGRAM_DOWNLOADER_LOG_CHANNEL_ID
+WARP_PROXIES
 ```
 - install required python modules:
 ```
