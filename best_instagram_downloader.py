@@ -25,25 +25,20 @@ def post_or_reel_link_handler(message):
     try:
         log(f"{bot_username} log:\n\nuser:\n{message.chat.id}\n\n✅ message text:\n{message.text}")
         guide_msg_1 = bot.send_message(message.chat.id, "Ok wait a few moments...")
-        post_shortcode = get_post_or_reel_shortcode_from_link(message.text)
-        print(post_shortcode)
+        post_shortcode, content_type = get_post_or_reel_info_from_link(message.text)
+        print(post_shortcode, content_type)
 
         if not post_shortcode:
             log(f"{bot_username} log:\n\nuser: {message.chat.id}\n\n🛑 error in getting post_shortcode")
             return # post shortcode not found
 
-        media_links, caption = get_instagram_media_links(post_shortcode)
+        media_links, caption = get_instagram_media_links(post_shortcode, content_type)
         
         # todo: fix later if possible and don't let it to happen in the first place
         # if they are both empty and the riad_azz returned this error:
         # "Error extracting media info: 'NoneType' object has no attribute 'get'"
         if (not media_links) and (not caption):
             raise Exception("riad_azz returned nothing")
-
-        # # debug
-        # print(media_links)
-        # media_links = media_links[:9]
-        # print(media_links[-1])
 
         # caption handling
         if caption is None:
@@ -54,17 +49,32 @@ def post_or_reel_link_handler(message):
 
         media_list = []
         for idx, item in enumerate(media_links):
-            if item['type'] == 'video':
+            url = item['url']
+            try:
+                file_content = download_media_bytes(url)
+            except Exception as exc:
+                log(f"a not ok file between files ({url[:80]}...): {exc}")
+                continue
+
+            is_video = item['type'] == 'video'
+            file_bytes = io.BytesIO(file_content)
+            file_bytes.name = f"file_{idx}.mp4" if is_video else f"file_{idx}.jpg"
+
+            if is_video:
                 if idx == 0:
-                    media = telebot.types.InputMediaVideo(item['url'], caption=caption)
+                    media = telebot.types.InputMediaVideo(media=telebot.types.InputFile(file_bytes), caption=caption)
                 else:
-                    media = telebot.types.InputMediaVideo(item['url'])
+                    media = telebot.types.InputMediaVideo(media=telebot.types.InputFile(file_bytes))
             else:
                 if idx == 0:
-                    media = telebot.types.InputMediaPhoto(item['url'], caption=caption)
+                    media = telebot.types.InputMediaPhoto(media=telebot.types.InputFile(file_bytes), caption=caption)
                 else:
-                    media = telebot.types.InputMediaPhoto(item['url'])
+                    media = telebot.types.InputMediaPhoto(media=telebot.types.InputFile(file_bytes))
+
             media_list.append(media)
+
+        if not media_list:
+            raise Exception("all media downloads failed")
 
         def chunk_list(lst, n):
             for i in range(0, len(lst), n):
@@ -78,10 +88,15 @@ def post_or_reel_link_handler(message):
                 bot.send_video(message.chat.id, media.media, caption=media.caption)
         else:
             for chunk in chunk_list(media_list, 10):
-                print(chunk)
                 bot.send_media_group(message.chat.id, chunk)
-        bot.send_message(message.chat.id, end_msg, parse_mode="Markdown", disable_web_page_preview=True)
         try_to_delete_message(message.chat.id, guide_msg_1.message_id)
+        # # starpal promotion
+        # if message.from_user.language_code == "fa":
+        #     log(f"{bot_username} log:\n\nuser: {message.chat.id}\n\n⭐️ starpal promotion for iranian user")
+        #     bot.send_message(message.chat.id, starpal_promotion_msg, parse_mode="Markdown", disable_web_page_preview=False)
+        #     return
+        # normal end message
+        bot.send_message(message.chat.id, end_msg, parse_mode="Markdown", disable_web_page_preview=True)
         return
     except Exception as e:
         try:

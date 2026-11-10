@@ -1,108 +1,187 @@
+import json
+import time
+
+import requests
+
 from variables import *
 
-def generate_request_body(shortcode):
-    return urllib.parse.urlencode({
-        'av': '0',
-        '__d': 'www',
-        '__user': '0',
-        '__a': '1',
-        '__req': 'b',
-        '__hs': '20183.HYP:instagram_web_pkg.2.1...0',
-        'dpr': '3',
-        '__ccg': 'GOOD',
-        '__rev': '1021613311',
-        '__s': 'hm5eih:ztapmw:x0losd',
-        '__hsi': '7489787314313612244',
-        '__dyn': '7xeUjG1mxu1syUbFp41twpUnwgU7SbzEdF8aUco2qwJw5ux609vCwjE1EE2Cw8G11wBz81s8hwGxu786a3a1YwBgao6C0Mo2swtUd8-U2zxe2GewGw9a361qw8Xxm16wa-0oa2-azo7u3C2u2J0bS1LwTwKG1pg2fwxyo6O1FwlA3a3zhA6bwIxe6V8aUuwm8jwhU3cyVrDyo',
-        '__csr': 'goMJ6MT9Z48KVkIBBvRfqKOkinBtG-FfLaRgG-lZ9Qji9XGexh7VozjHRKq5J6KVqjQdGl2pAFmvK5GWGXyk8h9GA-m6V5yF4UWagnJzazAbZ5osXuFkVeGCHG8GF4l5yp9oOezpo88PAlZ1Pxa5bxGQ7o9VrFbg-8wwxp1G2acxacGVQ00jyoE0ijonyXwfwEnwWwkA2m0dLw3tE1I80hCg8UeU4Ohox0clAhAtsM0iCA9wap4DwhS1fxW0fLhpRB51m13xC3e0h2t2H801HQw1bu02j-',
-        '__comet_req': '7',
-        'lsd': 'AVrqPT0gJDo',
-        'jazoest': '2946',
-        '__spin_r': '1021613311',
-        '__spin_b': 'trunk',
-        '__spin_t': '1743852001',
-        '__crn': 'comet.igweb.PolarisPostRoute',
-        'fb_api_caller_class': 'RelayModern',
-        'fb_api_req_friendly_name': 'PolarisPostActionLoadPostQueryQuery',
-        'variables': json.dumps({
-            'shortcode': shortcode,
-            'fetch_tagged_user_count': None,
-            'hoisted_comment_id': None,
-            'hoisted_reply_id': None,
-        }),
-        'server_timestamps': 'true',
-        'doc_id': '8845758582119845',
-    })
+POST_DOC_ID = "27128499623469141"
+LEGACY_POST_DOC_ID = "8845758582119845"
+DEFAULT_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+    ),
+    "Accept": "*/*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "X-IG-App-ID": "1217981644879628",
+    "X-ASBD-ID": "359341",
+}
 
-def get_instagram_media_links(shortcode):
-    url = "https://www.instagram.com/graphql/query"
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 11; SAMSUNG SM-G973U) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/14.2 Chrome/87.0.4280.141 Mobile Safari/537.36',
-        'Accept': '*/*',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-FB-Friendly-Name': 'PolarisPostActionLoadPostQueryQuery',
-        'X-BLOKS-VERSION-ID': '0d99de0d13662a50e0958bcb112dd651f70dea02e1859073ab25f8f2a477de96',
-        'X-CSRFToken': 'uy8OpI1kndx4oUHjlHaUfu',
-        'X-IG-App-ID': '1217981644879628',
-        'X-FB-LSD': 'AVrqPT0gJDo',
-        'X-ASBD-ID': '359341',
-        'Sec-GPC': '1',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-        'Pragma': 'no-cache',
-        'Cache-Control': 'no-cache',
-        'Referer': f'https://www.instagram.com/p/{shortcode}/',
-    }
-    data = generate_request_body(shortcode)
-    response = requests.post(url, headers=headers, data=data, proxies=warp_proxies)
+
+def _media_item(media_type, url):
+    if not url:
+        return None
+    return {"type": media_type, "url": url}
+
+
+def _warmup_session(session, shortcode, content_type):
+    referer = f"https://www.instagram.com/{content_type}/{shortcode}/"
+    response = session.get(
+        referer,
+        headers={**DEFAULT_HEADERS, "Accept": "text/html,application/xhtml+xml"},
+        proxies=warp_proxies,
+        timeout=20,
+    )
     response.raise_for_status()
-    json_response = response.json()
+    return referer
 
-    # debug - to view json view pretty
-    with open(f"instagram_response.json", "w") as f:
-        json.dump(json_response, f, indent=2)
 
+def _graphql_variables(shortcode, doc_id):
+    if doc_id == POST_DOC_ID:
+        return {
+            "shortcode": shortcode,
+            "__relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider": False,
+        }
+    return {
+        "shortcode": shortcode,
+        "fetch_tagged_user_count": None,
+        "hoisted_comment_id": None,
+        "hoisted_reply_id": None,
+    }
+
+
+def _graphql_query(session, shortcode, content_type, doc_id):
+    referer = _warmup_session(session, shortcode, content_type)
+    csrf = session.cookies.get("csrftoken", "")
+    params = {
+        "variables": json.dumps(_graphql_variables(shortcode, doc_id), separators=(",", ":")),
+        "doc_id": doc_id,
+        "server_timestamps": "true",
+    }
+    response = session.get(
+        "https://www.instagram.com/graphql/query",
+        headers={
+            **DEFAULT_HEADERS,
+            "X-CSRFToken": csrf,
+            "Referer": referer,
+        },
+        params=params,
+        proxies=warp_proxies,
+        timeout=20,
+    )
+    if response.status_code != 200:
+        raise ValueError(f"graphql status {response.status_code}")
+    payload = response.json()
+    if payload.get("errors"):
+        raise ValueError(payload["errors"][0].get("message", "graphql error"))
+    return payload
+
+
+def _extract_from_graphql_media(media):
     media_links = []
-    caption = None
-    try:
-        media = json_response['data']['xdt_shortcode_media']
-        # caption
-        caption = media.get('edge_media_to_caption', {}).get('edges', [{}])[0].get('node', {}).get('text', '')
-        # Check if it's a sidecar (multiple media)
-        if media.get('__typename') == 'XDTGraphSidecar' and 'edge_sidecar_to_children' in media:
-            edges = media['edge_sidecar_to_children']['edges']
-            for edge in edges:
-                node = edge['node']
-                media_type = 'video' if node.get('is_video', False) else 'image'
-                if media_type == 'video':
-                    url = node.get('video_url')
-                else:
-                    display_resources = node.get('display_resources', [])
-                    if display_resources:
-                        url = display_resources[-1]['src']
-                    else:
-                        url = node.get('display_url')
-                media_links.append({'type': media_type, 'url': url})
-        else:
-            media_type = 'video' if media.get('is_video', False) else 'image'
-            if media_type == 'video':
-                url = media.get('video_url')
+    caption = ""
+    caption_data = media.get("edge_media_to_caption", {}).get("edges", [])
+    if caption_data:
+        caption = caption_data[0].get("node", {}).get("text", "") or ""
+
+    if media.get("__typename") == "XDTGraphSidecar" and "edge_sidecar_to_children" in media:
+        for edge in media["edge_sidecar_to_children"]["edges"]:
+            node = edge["node"]
+            if node.get("is_video"):
+                item = _media_item("video", node.get("video_url"))
             else:
-                display_resources = media.get('display_resources', [])
-                if display_resources:
-                    url = display_resources[-1]['src']
-                else:
-                    url = media.get('display_url')
-            media_links.append({'type': media_type, 'url': url})
-    except Exception as e:
-        print(f"Error extracting media info: {e}")
-        # return "error", f"{e}"
+                display_resources = node.get("display_resources", [])
+                url = display_resources[-1]["src"] if display_resources else node.get("display_url")
+                item = _media_item("photo", url)
+            if item:
+                media_links.append(item)
+    elif media.get("is_video"):
+        item = _media_item("video", media.get("video_url"))
+        if item:
+            media_links.append(item)
+    else:
+        display_resources = media.get("display_resources", [])
+        url = display_resources[-1]["src"] if display_resources else media.get("display_url")
+        item = _media_item("photo", url)
+        if item:
+            media_links.append(item)
     return media_links, caption
 
-# # Example usage:
-# # shortcode = "DJx51PyxMpy"  # rock post: multiple videos and images
-# shortcode = "DMLLAxNsWFL"  # zelatan: one video (opens in my browser but erros for telegram servers)
-# links, caption = get_instagram_media_links(shortcode)
-# print(links, caption)
+
+def _extract_from_v1_media(media):
+    media_links = []
+    caption_data = media.get("caption")
+    caption = caption_data.get("text", "") if isinstance(caption_data, dict) else ""
+
+    carousel = media.get("carousel_media") or []
+    if carousel:
+        for item in carousel:
+            if item.get("media_type") == 2:
+                videos = item.get("video_versions") or []
+                media_item = _media_item("video", videos[0]["url"] if videos else None)
+            else:
+                candidates = (item.get("image_versions2") or {}).get("candidates") or []
+                media_item = _media_item("photo", candidates[0]["url"] if candidates else None)
+            if media_item:
+                media_links.append(media_item)
+    elif media.get("media_type") == 2:
+        videos = media.get("video_versions") or []
+        media_item = _media_item("video", videos[0]["url"] if videos else None)
+        if media_item:
+            media_links.append(media_item)
+    else:
+        candidates = (media.get("image_versions2") or {}).get("candidates") or []
+        media_item = _media_item("photo", candidates[0]["url"] if candidates else None)
+        if media_item:
+            media_links.append(media_item)
+    return media_links, caption
+
+
+def _parse_graphql_payload(payload):
+    data = payload.get("data") or {}
+    web_info = data.get("xdt_api__v1__media__shortcode__web_info") or {}
+    items = web_info.get("items") or []
+    if items:
+        return _extract_from_v1_media(items[0])
+
+    media = data.get("xdt_shortcode_media")
+    if media:
+        return _extract_from_graphql_media(media)
+
+    raise ValueError("graphql returned no media")
+
+
+def _content_types_to_try(content_type):
+    if content_type == "reel":
+        return ("reel", "p")
+    return (content_type or "p",)
+
+
+def fetch_instagram_media(shortcode, content_type="p"):
+    errors = []
+    session = requests.Session()
+    for doc_id in (POST_DOC_ID, LEGACY_POST_DOC_ID):
+        for path_type in _content_types_to_try(content_type):
+            for attempt in range(3):
+                if attempt:
+                    time.sleep(3 * attempt)
+                try:
+                    payload = _graphql_query(session, shortcode, path_type, doc_id)
+                    media_links, caption = _parse_graphql_payload(payload)
+                    if media_links:
+                        print(
+                            f"instagram media fetched via graphql "
+                            f"(doc={doc_id}, path={path_type}, attempt={attempt + 1})"
+                        )
+                        return media_links, caption
+                    errors.append(f"{doc_id}/{path_type}/attempt-{attempt + 1}: empty media list")
+                except Exception as exc:
+                    errors.append(f"{doc_id}/{path_type}/attempt-{attempt + 1}: {exc}")
+
+    print(f"graphql failed for {shortcode}: {' | '.join(errors)}")
+    return [], None
+
+
+def get_instagram_media_links(shortcode, content_type="p"):
+    return fetch_instagram_media(shortcode, content_type)

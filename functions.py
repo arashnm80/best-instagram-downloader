@@ -25,7 +25,7 @@ def log(log_message):
     log = requests.post(log_bot_url + "sendMessage", data={
         "chat_id": log_channel_id,
         "text": log_message
-    })
+    }, proxies=warp_proxies)
     
     # Check if the log was sent successfully
     if log.status_code == 200:
@@ -75,5 +75,35 @@ def get_post_or_reel_shortcode_from_link(link):
     match = re.search(insta_post_or_reel_reg, link)
     if match:
         return match.group(2)
-    else:
-        return False
+    return False
+
+def get_post_or_reel_info_from_link(link):
+    match = re.search(insta_post_or_reel_reg, link)
+    if match:
+        return match.group(2), match.group(1)
+    return False, False
+
+def download_media_bytes(url, retries=3):
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        ),
+        "Referer": "https://www.instagram.com/",
+    }
+    last_error = None
+    for attempt in range(retries):
+        try:
+            response = requests.get(
+                url,
+                stream=True,
+                proxies=warp_proxies,
+                headers=headers,
+                timeout=45,
+            )
+            if response.status_code == 200:
+                return response.content
+            last_error = f"status {response.status_code}"
+        except requests.RequestException as exc:
+            last_error = str(exc)
+    raise RuntimeError(f"download failed after {retries} attempts: {last_error}")

@@ -8,9 +8,12 @@ import re
 import requests
 import traceback # to print error traceback
 import telebot
+from telebot import apihelper
 
 import json
 import urllib.parse
+
+import io
 
 # we use dotenv to use os.getenv() instead of os.environ[]
 # and read from '.env' in current folder instead of '/etc/environment'
@@ -30,9 +33,10 @@ bot_username = "@Best_Instagram_Downloader_Bot"
 caption_trail = "\n\n\n" + bot_username
 session_file_name = "session" # any name change should apply to .gitignore too
 
-# warp socks proxy
+# warp socks proxy — required for every outbound HTTP(S) request
 warp_proxies = os.environ["WARP_PROXIES"]
 warp_proxies = json.loads(warp_proxies)
+apihelper.proxy = warp_proxies
 
 # regex
 insta_post_or_reel_reg = r'(?:https?://www\.)?instagram\.com\S*?/(p|reel)/([a-zA-Z0-9_-]{11})/?'
@@ -58,12 +62,13 @@ privacy_msg = '''This bot doesn't gather any info from the users.
 Also it's whole open source and available here:
 https://github.com/arashnm80/best-instagram-downloader'''
 
-end_msg = '''If you liked the bot you can support me by giving a star [here](https://github.com/arashnm80/best-instagram-downloader)⭐ (it's free)
+end_msg = '''Me:\n[Youtube](https://www.youtube.com/@Arashnm80) • [𝕏](https://x.com/Arashnm80) • [Github](https://github.com/arashnm80)'''
+# end_msg = '''If you liked the bot you can support me by giving a star [here](https://github.com/arashnm80/best-instagram-downloader)⭐ (it's free)
 
-You can also check out my *Music Downloader* too: @SpotSeekBot'''
+# You can also check out my *Music Downloader* too: @SpotSeekBot'''
 
 fail_msg = '''Sorry, my process wasn't successful.
-But you can try again another time or with another link.'''
+But you can try again with another links.'''
 
 wrong_pattern_msg = '''wrong pattern.
 You should send an instagram post or reel link.'''
@@ -72,3 +77,6 @@ reel_msg = '''reel links are not supported at the moment.
 You can send post links instead.
 
 Motivate me to add support of reels and stories by subscribing to [my youtube](https://www.youtube.com/@Arashnm80)'''
+
+starpal_promotion_msg = \
+'''⭐️خرید ستاره تلگرام بدون احراز هویت و در کمتر از ۲ دقیقه!  👈  starpal.ir'''
